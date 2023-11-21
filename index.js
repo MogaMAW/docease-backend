@@ -138,6 +138,7 @@ app.get("/near-by-places", async (req, res) => {
   const longitude = req.query.longitude;
   const disease = req.query.disease;
 
+  console.log("Disease",disease)
   // Initializing a variable to store the last disease queried
   let lastDisease = '';
 
@@ -197,6 +198,8 @@ app.get("/near-by-places", async (req, res) => {
       // If the disease is different, we shuffle the array and update the lastDisease variable
       shuffleArray(healthFacilities.data.results);
       lastDisease = disease;
+
+      console.log("last disease",lastDisease)
 
       res.status(200).json({
         success: true,
