@@ -188,25 +188,19 @@ app.get("/near-by-places", async (req, res) => {
     }
 
     // If the disease is the same as the last one queried, do not shuffle the array
-    if (disease === lastDisease) {
-      res.status(200).json({
-        success: true,
-        message: "Health facilities found successfully",
-        data: healthFacilities.data,
-      });
-    } else {
+    if (disease !== lastDisease) {
       // If the disease is different, we shuffle the array and update the lastDisease variable
       shuffleArray(healthFacilities.data.results);
       lastDisease = disease;
 
       console.log("last disease",lastDisease)
-
-      res.status(200).json({
-        success: true,
-        message: "Health facilities found successfully",
-        data: healthFacilities.data,
-      });
     }
+
+    res.status(200).json({
+      success: true,
+      message: "Health facilities found successfully",
+      data: healthFacilities.data,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Internal server error." });
