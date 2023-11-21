@@ -138,6 +138,9 @@ app.get("/near-by-places", async (req, res) => {
   const longitude = req.query.longitude;
   const disease = req.query.disease;
 
+  // Initializing a variable to store the last disease queried
+  let lastDisease = '';
+
   try {
     if (!latitude || !longitude) {
       return res.status(400).json({
@@ -146,14 +149,14 @@ app.get("/near-by-places", async (req, res) => {
       });
     }
 
-    // Check if disease is provided and commonly treated in Uganda
+    // Checking if disease is provided and commonly treated in Uganda
     if (disease) {
       const formattedDisease =
         disease.charAt(0).toUpperCase() + disease.slice(1).toLowerCase();
       const isTreatable =
         binarySearch(treatableDiseases, formattedDisease) !== -1;
 
-      // If the disease is not treatable in Uganda, return a message indicating so
+      // If the disease is not treatable in Uganda, we return a message indicating so
       if (!isTreatable) {
         return res.status(400).json({
           success: true,
@@ -167,7 +170,7 @@ app.get("/near-by-places", async (req, res) => {
         .json({ success: false, message: "Please provide a disease" });
     }
 
-    // Proceed with finding health facilities
+    // Proceeding with finding health facilities
     const healthFacilities = await client.placesNearby({
       params: {
         location: `${latitude}, ${longitude}`,
@@ -183,19 +186,30 @@ app.get("/near-by-places", async (req, res) => {
         .json({ success: false, message: "Could not find places" });
     }
 
-    // shuffle the array
-    shuffleArray(healthFacilities.data.results);
+    // If the disease is the same as the last one queried, do not shuffle the array
+    if (disease === lastDisease) {
+      res.status(200).json({
+        success: true,
+        message: "Health facilities found successfully",
+        data: healthFacilities.data,
+      });
+    } else {
+      // If the disease is different, we shuffle the array and update the lastDisease variable
+      shuffleArray(healthFacilities.data.results);
+      lastDisease = disease;
 
-    res.status(200).json({
-      success: true,
-      message: "Health facilities found successfully",
-      data: healthFacilities.data,
-    });
+      res.status(200).json({
+        success: true,
+        message: "Health facilities found successfully",
+        data: healthFacilities.data,
+      });
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Internal server error." });
   }
 });
+
 app.post("/users/forgot-password", async (req, res) => {
   try {
     const email = req.body.email;
