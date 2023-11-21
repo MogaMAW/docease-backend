@@ -171,13 +171,15 @@ app.get("/near-by-places", async (req, res) => {
         return res.status(200).json({
           success: true,
           message: "Health facilities found successfully",
-          data: healthFacilities.data,
+          data: healthFacilities ? healthFacilities.data : [],
         });
       }
 
       // If the disease is different,we shuffle the results and update the last searched disease
       lastSearchedDisease = formattedDisease;
-      shuffleArray(healthFacilities.data.results);
+      if (healthFacilities && healthFacilities.data && healthFacilities.data.results) {
+        shuffleArray(healthFacilities.data.results);
+      }
     } else {
       return res
         .status(400)
@@ -201,7 +203,9 @@ app.get("/near-by-places", async (req, res) => {
     }
 
     // shuffle the array
-    shuffleArray(healthFacilities.data.results);
+    if (healthFacilities.data && healthFacilities.data.results) {
+      shuffleArray(healthFacilities.data.results);
+    }
 
     res.status(200).json({
       success: true,
