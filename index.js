@@ -138,9 +138,9 @@ app.get("/near-by-places", async (req, res) => {
   const longitude = req.query.longitude;
   const disease = req.query.disease;
 
-  console.log("Disease",disease)
-  // Initializing a variable to store the last disease queried
-  let lastDisease = '';
+  // Temporary storage for the last searched disease
+  let lastSearchedDisease = null;
+  let healthFacilities = null; // Initializing the  healthFacilities
 
   try {
     if (!latitude || !longitude) {
@@ -150,14 +150,14 @@ app.get("/near-by-places", async (req, res) => {
       });
     }
 
-    // Checking if disease is provided and commonly treated in Uganda
+    // Check if disease is provided and commonly treated in Uganda
     if (disease) {
       const formattedDisease =
         disease.charAt(0).toUpperCase() + disease.slice(1).toLowerCase();
       const isTreatable =
         binarySearch(treatableDiseases, formattedDisease) !== -1;
 
-      // If the disease is not treatable in Uganda, we return a message indicating so
+      // If the disease is not treatable in Uganda, return a message indicating so
       if (!isTreatable) {
         return res.status(400).json({
           success: true,
@@ -165,6 +165,19 @@ app.get("/near-by-places", async (req, res) => {
           data: [],
         });
       }
+
+      // If the disease is the same as the last searched disease, we do not shuffle the results
+      if (lastSearchedDisease === formattedDisease) {
+        return res.status(200).json({
+          success: true,
+          message: "Health facilities found successfully",
+          data: healthFacilities.data,
+        });
+      }
+
+      // If the disease is different,we shuffle the results and update the last searched disease
+      lastSearchedDisease = formattedDisease;
+      shuffleArray(healthFacilities.data.results);
     } else {
       return res
         .status(400)
@@ -172,7 +185,7 @@ app.get("/near-by-places", async (req, res) => {
     }
 
     // Proceeding with finding health facilities
-    const healthFacilities = await client.placesNearby({
+    healthFacilities = await client.placesNearby({
       params: {
         location: `${latitude}, ${longitude}`,
         key: process.env.GOOGLE_MAPS_API_KEY,
@@ -187,14 +200,8 @@ app.get("/near-by-places", async (req, res) => {
         .json({ success: false, message: "Could not find places" });
     }
 
-    // If the disease is the same as the last one queried, do not shuffle the array
-    if (disease !== lastDisease) {
-      // If the disease is different, we shuffle the array and update the lastDisease variable
-      shuffleArray(healthFacilities.data.results);
-      lastDisease = disease;
-
-      console.log("last disease",lastDisease)
-    }
+    // shuffle the array
+    shuffleArray(healthFacilities.data.results);
 
     res.status(200).json({
       success: true,
