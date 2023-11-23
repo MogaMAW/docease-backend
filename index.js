@@ -588,6 +588,18 @@ async function authorize(req, res, next) {
 
   const decoded = jwt.verify(token, jwtSecret);
 
+  const tokenExpiry = decoded.exp; //seconds
+  const now = Math.floor(Date.now() / 1000); //seconds
+
+  if (now > tokenExpiry) {
+    return res.status(403).json({
+      success: false,
+      message: "You token has expired. please again to get access",
+    });
+  }
+
+  // check for expiry
+
   const user = await db.collection("doceaseclients").get(decoded.key);
 
   if (!user) {
