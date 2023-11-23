@@ -132,8 +132,13 @@ app.post("/clients/new", async (req, res) => {
   }
 });
 
+function getFirstTenHospitals(inputArray) {
+  return inputArray.slice(0, 10);
+}
+
 // Get hospitals/health facilities within given radius using googlemaps
-app.get("/near-by-places", async (req, res) => {
+// TODO: include the pre check middle to check for disease with associated hospitals
+app.get("/near-by-places", authorize, async (req, res) => {
   const latitude = req.query.latitude;
   const longitude = req.query.longitude;
   const disease = req.query.disease;
@@ -177,13 +182,44 @@ app.get("/near-by-places", async (req, res) => {
 
       // If the disease is different,we shuffle the results and update the last searched disease
       lastSearchedDisease = formattedDisease;
-      if (healthFacilities && healthFacilities.data && healthFacilities.data.results) {
+      if (
+        healthFacilities &&
+        healthFacilities.data &&
+        healthFacilities.data.results
+      ) {
         shuffleArray(healthFacilities.data.results);
       }
     } else {
       return res
         .status(400)
         .json({ success: false, message: "Please provide a disease" });
+    }
+
+    const email = res.locals.key;
+    const resultKey = `${disease.toLocaleLowerCase()}-${email}`;
+    console.log("resultKey", resultKey);
+    // check for disease in the database
+    const dbSearchResults = await db.collection("searchresults").get(resultKey);
+
+    const isExpiredSearchResults =
+      new Date(Date.now()) > new Date(dbSearchResults?.props.expiresAt);
+
+    // delete when results are expired
+    if (isExpiredSearchResults) {
+      await db.collection("searchresults").delete(resultKey);
+    }
+
+    // Return search results from the database
+    if (
+      dbSearchResults?.props.latitude == latitude &&
+      dbSearchResults?.props.longitude == longitude &&
+      !isExpiredSearchResults
+    ) {
+      return res.status(200).json({
+        success: true,
+        message: "Health facilities found successfully",
+        data: dbSearchResults.props.searchResults,
+      });
     }
 
     // Proceeding with finding health facilities
@@ -203,9 +239,23 @@ app.get("/near-by-places", async (req, res) => {
     }
 
     // shuffle the array
-    if (healthFacilities.data && healthFacilities.data.results) {
-      shuffleArray(healthFacilities.data.results);
-    }
+    shuffleArray(healthFacilities.data.results);
+    // take first 10 hospitals
+    const hospitals = getFirstTenHospitals(healthFacilities.data.results);
+
+    healthFacilities.data.results = hospitals;
+
+    const params = {
+      latitude: latitude,
+      longitude: longitude,
+      disease: disease,
+      email: email,
+      searchResults: healthFacilities.data,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+    };
+
+    await db.collection("searchresults").set(resultKey, params);
 
     res.status(200).json({
       success: true,
