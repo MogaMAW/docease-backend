@@ -32,12 +32,21 @@ function shuffleArray(array) {
 }
 
 const treatableDiseases = [
-  "AIDS",
-  "Cancer",
-  "Ebola",
   "Malaria",
   "Tuberculosis",
-  "Yellow Fever",
+  "Covid-19",
+  "AIDS",
+  "Cancer",
+  "Cholera",
+  "Measles",
+  "Ebola",
+  "Yellow fever",
+  "Flu",
+  "Cough",
+  "Typhoid",
+  "Urinary Tract Infection (UTI)",
+  "Prostate Disorder",
+  "Anemia",
 ].sort();
 
 function binarySearch(arr, disease) {
