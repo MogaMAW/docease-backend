@@ -32,24 +32,25 @@ function shuffleArray(array) {
 }
 
 const treatableDiseases = [
-  "Malaria",
-  "Tuberculosis",
-  "Covid-19",
-  "AIDS",
-  "Cancer",
-  "Cholera",
-  "Measles",
-  "Ebola",
-  "Yellow fever",
-  "Flu",
-  "Cough",
-  "Typhoid",
-  "Urinary Tract Infection (UTI)",
-  "Prostate Disorder",
-  "Anemia",
+  "malaria",
+  "tuberculosis",
+  "covid 19",
+  "aids",
+  "cancer",
+  "cholera",
+  "measles",
+  "ebola",
+  "yellow fever",
+  "flu",
+  "cough",
+  "typhoid",
+  "urinary tract infection (uti)",
+  "prostate disorder",
+  "anemia",
 ].sort();
 
-function binarySearch(arr, disease) {
+function binarySearch(arr, diseaseInput) {
+  const disease = diseaseInput.toLowerCase();
   let left = 0;
   let right = arr.length - 1;
 
